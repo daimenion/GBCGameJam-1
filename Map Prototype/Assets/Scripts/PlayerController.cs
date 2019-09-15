@@ -81,21 +81,38 @@ public class PlayerController : MonoBehaviour
     }
 
     void SetCharacter() {
+        GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        cube.transform.position = new Vector3(0, 100.5f, 0);
+
+        GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        sphere.transform.position = new Vector3(0, 100.5f, 0);
+
+        GameObject capsule = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+        capsule.transform.position = new Vector3(2, 100, 0);
+
+        GameObject cylinder = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        cylinder.transform.position = new Vector3(-2, 100, 0);
 
         switch (CharacterNumber) {
             case 0:
-                
+                GetComponent<MeshFilter>().mesh = cube.GetComponent<MeshFilter>().mesh;
                 break;
             case 1:
-               
+                GetComponent<MeshFilter>().mesh = sphere.GetComponent<MeshFilter>().mesh;
                 break;
             case 2:
-                
+                GetComponent<MeshFilter>().mesh = capsule.GetComponent<MeshFilter>().mesh;
                 break;
             case 3:
-                
+                GetComponent<MeshFilter>().mesh = cylinder.GetComponent<MeshFilter>().mesh;
                 break;
         }
+        //after the mesh is set destroy the created ones 
+        Destroy(cube);
+        Destroy(sphere);
+        Destroy(capsule);
+        Destroy(cylinder);
+
     }
     IEnumerator CharacterSeted() {
         yield return new WaitForSeconds(0.3f);
