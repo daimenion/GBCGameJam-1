@@ -9,11 +9,16 @@ public class PlayerController : MonoBehaviour
     public int CharacterNumber{ get; private set; }
     public int PlayerNumber { get; private set; }
     [SerializeField] PlayerNum playerNum;
+    public int stamina { get;  set; }
+
     //private
     float MoveSpeed;
     bool start;
+    bool running;
+    bool rotating;
     Player RewiredPlayer;
     Vector3 moveDirection;
+    Vector3 RotateDirection;
     Rigidbody rBody;
     
 
@@ -29,10 +34,13 @@ public class PlayerController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        //set basic player info
         MoveSpeed = 5;
+        stamina = 100;
         rBody = GetComponent<Rigidbody>();
         players = FindObjectsOfType<PlayerController>();
 
+        //set rewired controller
         switch (playerNum)
         {
             case PlayerNum.P1:
@@ -57,11 +65,12 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        //give character random number
         if (!start)
         {
             foreach (PlayerController pl in players)
             {
-                if (pl.tag != tag)
+                if (pl.gameObject.layer != gameObject.layer)
                 {
                     if (CharacterNumber == pl.CharacterNumber)
                     {
@@ -72,15 +81,19 @@ public class PlayerController : MonoBehaviour
             SetCharacter();
             StartCoroutine("CharacterSeted");
         }
+        //
         InputHandle();
     }
-
+    //move player
     void FixedUpdate()
     {
         rBody.velocity = moveDirection;
+      
+        rBody.MoveRotation(rBody.rotation* Quaternion.Euler(RotateDirection * Time.deltaTime));
     }
 
     void SetCharacter() {
+        //create gameobject to get there mesh 
         GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
         cube.transform.position = new Vector3(0, 100.5f, 0);
 
@@ -114,14 +127,58 @@ public class PlayerController : MonoBehaviour
         Destroy(cylinder);
 
     }
+
     IEnumerator CharacterSeted() {
         yield return new WaitForSeconds(0.3f);
         start = true;
         StopAllCoroutines();
     }
+
     void InputHandle() {
+        //basic movement 
         moveDirection.x = RewiredPlayer.GetAxisRaw("horizontal");
         moveDirection.z = RewiredPlayer.GetAxisRaw("vertical");
         moveDirection = moveDirection.normalized * MoveSpeed;
+
+        //rigt joystick to rotate 1st method
+        if (rotating)
+        {
+            RotateDirection.y = RewiredPlayer.GetAxisRaw("RotateHorizontal");
+            RotateDirection = RotateDirection.normalized * 180;
+        }
+        //check if right stick is moving if it is then 2nd method won't rotate
+        if (RewiredPlayer.GetAxis("RotateHorizontal") != 0)
+        {
+            rotating = true;
+        }
+        else {
+            rotating = false;
+        }
+        //rotate base on right joystick as you move 2nd method
+        if (!rotating)
+        {
+            Quaternion rotation = Quaternion.LookRotation(new Vector3(moveDirection.x, RotateDirection.y, moveDirection.z));
+            transform.rotation = rotation;
+        }
+
+        //Character running
+        if (RewiredPlayer.GetButtonLongPress("Run") &&stamina>0) {
+            MoveSpeed = 15;
+            running = true;
+            stamina--;
+            if (stamina <= 0) {
+                stamina = 0;
+                MoveSpeed = 5;
+            }
+        }
+        else if (RewiredPlayer.GetButtonUp("Run"))
+            running = false;
+        else if (!running)
+        {
+            MoveSpeed = 5;
+            stamina++;
+            if (stamina >= 100)
+                stamina = 100;
+        }
     }
 }
